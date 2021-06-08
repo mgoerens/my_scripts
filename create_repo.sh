@@ -1,6 +1,6 @@
 #/bin/bash
 
-# Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc
+# Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc --existing
 #
 # Pre-requisites: direnv
 # - direnv: Not packages for CentOS / RHEL system, see https://github.com/direnv/direnv/issues/362
@@ -12,6 +12,7 @@ INSTALL_GO=false
 INSTALL_HELM=false
 INSTALL_OPERATOR_SDK=false
 INSTALL_OC=false
+EXISTING=false
 
 ### Parse arguments
 while [ "$#" -gt 0 ]; do
@@ -21,12 +22,14 @@ while [ "$#" -gt 0 ]; do
     -h) INSTALL_HELM=true; shift 1;;
     -o) INSTALL_OPERATOR_SDK=true; shift 1;;
     -c) INSTALL_OC=true; shift 1;;
+    -e) EXISTING=true; shift 1;;
 
     --name=*) REPO_NAME="${1#*=}"; shift 1;;
     --install_go) INSTALL_GO=true; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_oc) INSTALL_OC=true; shift 1;;
+    --existing) EXISTING=true; shift 1;;
      
     *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc" && exit 1;;
 #    *) handle_argument "$1"; shift 1;;
@@ -47,7 +50,7 @@ fi
 FULL_REPO_PATH="$BASE_DIR/$REPO_NAME"
 
 # Test if repo already exists
-if [ -d $FULL_REPO_PATH ]; then
+if [[ -d $FULL_REPO_PATH && ! $EXISTING ]]; then
   echo "Directory $REPO_NAME already exists in $BASE_DIR"
   exit 1
 fi
@@ -56,11 +59,23 @@ fi
 
 echo "----Create basic directory structure and add binary directory in .envrc"
 
-mkdir $FULL_REPO_PATH
+if [ ! $EXISTING ]; then
+  mkdir $FULL_REPO_PATH
+fi
 cd $FULL_REPO_PATH
 mkdir "$FULL_REPO_PATH/bin"
 echo "export PATH=\$PATH:$FULL_REPO_PATH/bin" >> .envrc
 direnv allow
+
+GIT_EXCLUDE_PATH="$FULL_REPO_PATH/.git/info/exclude"
+
+echo $GIT_EXCLUDE_PATH
+
+if [ -f $GIT_EXCLUDE_PATH ]; then
+  echo "bin" >> $GIT_EXCLUDE_PATH
+  echo ".direnv" >> $GIT_EXCLUDE_PATH
+fi
+
 
 # Adapted procedure from https://golang.org/doc/install and https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/
 # TODO: set go version
@@ -117,8 +132,7 @@ if $INSTALL_OC; then
   echo "----Install oc"
 
   wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
-  tar -zxvf openshift-client-linux.tar.gz
-  mv oc kubectl bin/
-  rm openshift-client-linux.tar.gz README.md
+  tar -zxvf openshift-client-linux.tar.gz -C bin/
+  rm openshift-client-linux.tar.gz bin/README.md
 fi
 
