@@ -22,6 +22,7 @@ while [ "$#" -gt 0 ]; do
     -h) INSTALL_HELM=true; shift 1;;
     -o) INSTALL_OPERATOR_SDK=true; shift 1;;
     -c) INSTALL_OC=true; shift 1;;
+    -k) KUBECONFIG_PATH="$2"; shift 2;;
     -e) EXISTING=true; shift 1;;
 
     --name=*) REPO_NAME="${1#*=}"; shift 1;;
@@ -30,6 +31,7 @@ while [ "$#" -gt 0 ]; do
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_oc) INSTALL_OC=true; shift 1;;
     --existing) EXISTING=true; shift 1;;
+    --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
      
     *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc" && exit 1;;
 #    *) handle_argument "$1"; shift 1;;
@@ -69,11 +71,9 @@ direnv allow
 
 GIT_EXCLUDE_PATH="$FULL_REPO_PATH/.git/info/exclude"
 
-echo $GIT_EXCLUDE_PATH
-
 if [ -f $GIT_EXCLUDE_PATH ]; then
   echo "bin" >> $GIT_EXCLUDE_PATH
-  echo ".direnv" >> $GIT_EXCLUDE_PATH
+  echo ".envrc" >> $GIT_EXCLUDE_PATH
 fi
 
 
@@ -136,3 +136,10 @@ if $INSTALL_OC; then
   rm openshift-client-linux.tar.gz bin/README.md
 fi
 
+if [ $KUBECONFIG_PATH ]; then
+  cp -v "$KUBECONFIG_PATH" "$FULL_REPO_PATH/kubeconfig"
+  echo "export KUBECONFIG=$FULL_REPO_PATH/kubeconfig" >> .envrc
+  if [ -f $GIT_EXCLUDE_PATH ]; then
+    echo "kubeconfig" >> $GIT_EXCLUDE_PATH
+  fi
+fi
