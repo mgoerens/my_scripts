@@ -138,6 +138,7 @@ fi
 
 if [ $KUBECONFIG_PATH ]; then
   cp -v "$KUBECONFIG_PATH" "$FULL_REPO_PATH/kubeconfig"
+  chmod 600 "$FULL_REPO_PATH/kubeconfig"
   echo "export KUBECONFIG=$FULL_REPO_PATH/kubeconfig" >> .envrc
   if [ -f $GIT_EXCLUDE_PATH ]; then
     echo "kubeconfig" >> $GIT_EXCLUDE_PATH
