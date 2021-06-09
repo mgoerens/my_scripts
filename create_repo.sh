@@ -61,21 +61,21 @@ fi
 
 echo "----Create basic directory structure and add binary directory in .envrc"
 
-if [ ! $EXISTING ]; then
+if ! $EXISTING; then
   mkdir $FULL_REPO_PATH
 fi
+
 cd $FULL_REPO_PATH
 mkdir "$FULL_REPO_PATH/bin"
 echo "export PATH=\$PATH:$FULL_REPO_PATH/bin" >> .envrc
-direnv allow
 
 GIT_EXCLUDE_PATH="$FULL_REPO_PATH/.git/info/exclude"
-
 if [ -f $GIT_EXCLUDE_PATH ]; then
   echo "bin" >> $GIT_EXCLUDE_PATH
   echo ".envrc" >> $GIT_EXCLUDE_PATH
 fi
 
+direnv allow
 
 # Adapted procedure from https://golang.org/doc/install and https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/
 # TODO: set go version
