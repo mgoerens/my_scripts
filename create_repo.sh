@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc --existing
 #
@@ -104,6 +104,13 @@ if $INSTALL_HELM; then
   rm -rf linux-amd64/
 #  helm version
   rm helm-v3.6.0-linux-amd64.tar.gz
+
+  # TODO: NOT TESTED
+  # if [ -f $FULL_REPO_PATH/.helmignore ]; then
+  #   echo "bin/" >> $FULL_REPO_PATH/.helmignore
+  #   echo ".envrc" >> $FULL_REPO_PATH/.helmignore
+  #   echo "kubeconfig" >> $FULL_REPO_PATH/.helmignore
+  # fi
 
   # Configure direnv
   # TODO: check Helm cache path
