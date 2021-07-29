@@ -11,6 +11,7 @@ BASE_DIR="/home/mgoerens/dev"
 INSTALL_GO=false
 INSTALL_HELM=false
 INSTALL_OPERATOR_SDK=false
+OPERATOR_SDK_VERSION="v1.10.0"
 INSTALL_OC=false
 EXISTING=false
 INSTALL_KIND=false
@@ -18,19 +19,20 @@ INSTALL_KIND=false
 ### Parse arguments
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    -n) REPO_NAME="$2"; shift 2;;
-    -g) INSTALL_GO=true; shift 1;;
-    -h) INSTALL_HELM=true; shift 1;;
-    -o) INSTALL_OPERATOR_SDK=true; shift 1;;
-    -c) INSTALL_OC=true; shift 1;;
-    -i) INSTALL_KIND=true; shift 1;;
-    -k) KUBECONFIG_PATH="$2"; shift 2;;
-    -e) EXISTING=true; shift 1;;
+#    -n) REPO_NAME="$2"; shift 2;;
+#    -g) INSTALL_GO=true; shift 1;;
+#    -h) INSTALL_HELM=true; shift 1;;
+#    -o) INSTALL_OPERATOR_SDK=true; shift 1;;
+#    -c) INSTALL_OC=true; shift 1;;
+#    -i) INSTALL_KIND=true; shift 1;;
+#    -k) KUBECONFIG_PATH="$2"; shift 2;;
+#    -e) EXISTING=true; shift 1;;
 
     --name=*) REPO_NAME="${1#*=}"; shift 1;;
     --install_go) INSTALL_GO=true; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
+    --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
     --install_oc) INSTALL_OC=true; shift 1;;
     --install_kind) INSTALL_KIND=true; shift 1;;
     --existing) EXISTING=true; shift 1;;
@@ -121,11 +123,12 @@ fi
 # Adapted procedure from: https://sdk.operatorframework.io/docs/installation/
 if $INSTALL_OPERATOR_SDK; then
   echo "----Install the Operator SDK"
+  echo "----Version: $OPERATOR_SDK_VERSION"
 
   # Download binary
   export ARCH=$(case $(uname -m) in x86_64) echo -n amd64 ;; aarch64) echo -n arm64 ;; *) echo -n $(uname -m) ;; esac)
   export OS=$(uname | awk '{print tolower($0)}')
-  export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/v1.8.0
+  export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}
   curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
   gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
   curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
