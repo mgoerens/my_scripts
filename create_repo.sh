@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc --existing
+# Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc install_kind --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
 #
 # Pre-requisites: direnv
 # - direnv: Not packages for CentOS / RHEL system, see https://github.com/direnv/direnv/issues/362
@@ -13,6 +13,7 @@ INSTALL_HELM=false
 INSTALL_OPERATOR_SDK=false
 INSTALL_OC=false
 EXISTING=false
+INSTALL_KIND=false
 
 ### Parse arguments
 while [ "$#" -gt 0 ]; do
@@ -22,6 +23,7 @@ while [ "$#" -gt 0 ]; do
     -h) INSTALL_HELM=true; shift 1;;
     -o) INSTALL_OPERATOR_SDK=true; shift 1;;
     -c) INSTALL_OC=true; shift 1;;
+    -i) INSTALL_KIND=true; shift 1;;
     -k) KUBECONFIG_PATH="$2"; shift 2;;
     -e) EXISTING=true; shift 1;;
 
@@ -30,11 +32,11 @@ while [ "$#" -gt 0 ]; do
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_oc) INSTALL_OC=true; shift 1;;
+    --install_kind) INSTALL_KIND=true; shift 1;;
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
      
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc" && exit 1;;
-#    *) handle_argument "$1"; shift 1;;
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc install_kind --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
@@ -143,10 +145,20 @@ if $INSTALL_OC; then
   rm openshift-client-linux.tar.gz bin/README.md
 fi
 
+# FROM: https://kind.sigs.k8s.io/docs/user/quick-start/
+# TODO: download latest by default, option to dl specific version
+if $INSTALL_KIND; then
+  echo "----Install kind"
+  curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64
+  chmod +x ./kind
+  mv ./kind bin/kind
+fi
+
 if [ $KUBECONFIG_PATH ]; then
   cp -v "$KUBECONFIG_PATH" "$FULL_REPO_PATH/kubeconfig"
   chmod 600 "$FULL_REPO_PATH/kubeconfig"
   echo "export KUBECONFIG=$FULL_REPO_PATH/kubeconfig" >> .envrc
+  direnv allow
   if [ -f $GIT_EXCLUDE_PATH ]; then
     echo "kubeconfig" >> $GIT_EXCLUDE_PATH
   fi
