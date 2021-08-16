@@ -9,9 +9,10 @@
 ### Set default values
 BASE_DIR="/home/mgoerens/dev"
 INSTALL_GO=false
+GO_VERSION="go1.16.7" # TODO: get latest release automatically
 INSTALL_HELM=false
 INSTALL_OPERATOR_SDK=false
-OPERATOR_SDK_VERSION="v1.10.0"
+OPERATOR_SDK_VERSION="v1.10.0" # TODO: get latest release automatically
 INSTALL_OC=false
 EXISTING=false
 INSTALL_KIND=false
@@ -30,6 +31,7 @@ while [ "$#" -gt 0 ]; do
 
     --name=*) REPO_NAME="${1#*=}"; shift 1;;
     --install_go) INSTALL_GO=true; shift 1;;
+    --install_go=*) INSTALL_GO=true; GO_VERSION="${1#*=}"; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
@@ -82,14 +84,13 @@ fi
 direnv allow
 
 # Adapted procedure from https://golang.org/doc/install and https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/
-# TODO: set go version
 if $INSTALL_GO; then
   echo "----Install Go and configure .direnv accordingly"
 
   # Downlod Go
-  wget https://golang.org/dl/go1.16.4.linux-amd64.tar.gz
-  tar -zxvf go1.16.4.linux-amd64.tar.gz
-  rm go1.16.4.linux-amd64.tar.gz
+  wget https://golang.org/dl/${GO_VERSION}.linux-amd64.tar.gz
+  tar -zxvf ${GO_VERSION}.linux-amd64.tar.gz
+  rm ${GO_VERSION}.linux-amd64.tar.gz
 
   # Configure direnv
   echo "layout go" >> .envrc
