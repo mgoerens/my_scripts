@@ -147,6 +147,8 @@ if $INSTALL_OC; then
   wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
   tar -zxvf openshift-client-linux.tar.gz -C bin/
   rm openshift-client-linux.tar.gz bin/README.md
+
+  echo "source <(kubectl completion bash)" >> .envrc
 fi
 
 # FROM: https://kind.sigs.k8s.io/docs/user/quick-start/
