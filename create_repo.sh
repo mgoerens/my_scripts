@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc install_kind --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
+# Usage: ./create_repo.sh --name=<repo_name> --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
 #
 # Pre-requisites: direnv
 # - direnv: Not packages for CentOS / RHEL system, see https://github.com/direnv/direnv/issues/362
@@ -8,14 +8,11 @@
 
 ### Set default values
 BASE_DIR="/home/mgoerens/dev"
-INSTALL_GO=false
-GO_VERSION="go1.16.7" # TODO: get latest release automatically
 INSTALL_HELM=false
 INSTALL_OPERATOR_SDK=false
 OPERATOR_SDK_VERSION=`curl -s https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | jq .name | tr -d \"`
 INSTALL_OC=false
 EXISTING=false
-INSTALL_KIND=false
 
 ### Parse arguments
 while [ "$#" -gt 0 ]; do
@@ -30,17 +27,14 @@ while [ "$#" -gt 0 ]; do
 #    -e) EXISTING=true; shift 1;;
 
     --name=*) REPO_NAME="${1#*=}"; shift 1;;
-    --install_go) INSTALL_GO=true; shift 1;;
-    --install_go=*) INSTALL_GO=true; GO_VERSION="${1#*=}"; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
     --install_oc) INSTALL_OC=true; shift 1;;
-    --install_kind) INSTALL_KIND=true; shift 1;;
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
      
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --name=<repo_name> --install_go --install_helm --install_operator_sdk --install_oc install_kind --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --name=<repo_name> --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
@@ -83,22 +77,7 @@ fi
 
 direnv allow
 
-# Adapted procedure from https://golang.org/doc/install and https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/
-if $INSTALL_GO; then
-  echo "----Install Go and configure .direnv accordingly"
-
-  # Downlod Go
-  wget https://golang.org/dl/${GO_VERSION}.linux-amd64.tar.gz
-  tar -zxvf ${GO_VERSION}.linux-amd64.tar.gz
-  rm ${GO_VERSION}.linux-amd64.tar.gz
-
-  # Configure direnv
-  echo "layout go" >> .envrc
-  echo "export PATH=\$PATH:$FULL_REPO_PATH/go/bin" >> .envrc
-  direnv allow
-fi
-
-# TODO: set go version
+# TODO: set helm version
 if $INSTALL_HELM; then
   echo "----Install Helm"
   
@@ -149,15 +128,6 @@ if $INSTALL_OC; then
   rm openshift-client-linux.tar.gz .bin/README.md
 
   echo "source <(kubectl completion bash)" >> .envrc
-fi
-
-# FROM: https://kind.sigs.k8s.io/docs/user/quick-start/
-# TODO: download latest by default, option to dl specific version
-if $INSTALL_KIND; then
-  echo "----Install kind"
-  curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64
-  chmod +x ./kind
-  mv ./kind .bin/kind
 fi
 
 if [ $KUBECONFIG_PATH ]; then
