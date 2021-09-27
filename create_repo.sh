@@ -114,7 +114,7 @@ if $INSTALL_HELM; then
   # if [ -f $FULL_REPO_PATH/.helmignore ]; then
   #   echo "bin/" >> $FULL_REPO_PATH/.helmignore
   #   echo ".envrc" >> $FULL_REPO_PATH/.helmignore
-  #   echo "kubeconfig" >> $FULL_REPO_PATH/.helmignore
+  #   echo "KUBECONFIG" >> $FULL_REPO_PATH/.helmignore
   # fi
 
   # Configure direnv
@@ -161,11 +161,11 @@ if $INSTALL_KIND; then
 fi
 
 if [ $KUBECONFIG_PATH ]; then
-  cp -v "$KUBECONFIG_PATH" "$FULL_REPO_PATH/kubeconfig"
-  chmod 600 "$FULL_REPO_PATH/kubeconfig"
-  echo "export KUBECONFIG=$FULL_REPO_PATH/kubeconfig" >> .envrc
+  cp -v "$KUBECONFIG_PATH" "$FULL_REPO_PATH/KUBECONFIG"
+  chmod 600 "$FULL_REPO_PATH/KUBECONFIG"
+  echo "export KUBECONFIG=$FULL_REPO_PATH/KUBECONFIG" >> .envrc
   direnv allow
   if [ -f $GIT_EXCLUDE_PATH ]; then
-    echo "kubeconfig" >> $GIT_EXCLUDE_PATH
+    echo "KUBECONFIG" >> $GIT_EXCLUDE_PATH
   fi
 fi
