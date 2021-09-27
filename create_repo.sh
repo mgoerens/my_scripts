@@ -10,7 +10,7 @@
 BASE_DIR="/home/mgoerens/dev"
 INSTALL_HELM=false
 INSTALL_OPERATOR_SDK=false
-OPERATOR_SDK_VERSION=`curl -s https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | jq .name | tr -d \"`
+OPERATOR_SDK_VERSION=$(curl -s https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | jq .name | tr -d \")
 INSTALL_OC=false
 EXISTING=false
 
