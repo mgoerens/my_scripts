@@ -72,12 +72,12 @@ if ! $EXISTING; then
 fi
 
 cd $FULL_REPO_PATH
-mkdir "$FULL_REPO_PATH/bin"
-echo "export PATH=\$PATH:$FULL_REPO_PATH/bin" >> .envrc
+mkdir "$FULL_REPO_PATH/.bin"
+echo "export PATH=\$PATH:$FULL_REPO_PATH/.bin" >> .envrc
 
 GIT_EXCLUDE_PATH="$FULL_REPO_PATH/.git/info/exclude"
 if [ -f $GIT_EXCLUDE_PATH ]; then
-  echo "bin" >> $GIT_EXCLUDE_PATH
+  echo ".bin" >> $GIT_EXCLUDE_PATH
   echo ".envrc" >> $GIT_EXCLUDE_PATH
 fi
 
@@ -105,14 +105,14 @@ if $INSTALL_HELM; then
   # Download binary
   wget https://get.helm.sh/helm-v3.6.0-linux-amd64.tar.gz
   tar -zxvf helm-v3.6.0-linux-amd64.tar.gz 
-  mv linux-amd64/helm bin/
+  mv linux-amd64/helm .bin/
   rm -rf linux-amd64/
 #  helm version
   rm helm-v3.6.0-linux-amd64.tar.gz
 
   # TODO: NOT TESTED
   # if [ -f $FULL_REPO_PATH/.helmignore ]; then
-  #   echo "bin/" >> $FULL_REPO_PATH/.helmignore
+  #   echo ".bin/" >> $FULL_REPO_PATH/.helmignore
   #   echo ".envrc" >> $FULL_REPO_PATH/.helmignore
   #   echo "KUBECONFIG" >> $FULL_REPO_PATH/.helmignore
   # fi
@@ -136,7 +136,7 @@ if $INSTALL_OPERATOR_SDK; then
   curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
   gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
   grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
-  chmod +x operator-sdk_${OS}_${ARCH} && mv operator-sdk_${OS}_${ARCH} bin/operator-sdk
+  chmod +x operator-sdk_${OS}_${ARCH} && mv operator-sdk_${OS}_${ARCH} .bin/operator-sdk
   rm checksums.txt*
 fi
 
@@ -145,8 +145,8 @@ if $INSTALL_OC; then
   echo "----Install oc"
 
   wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
-  tar -zxvf openshift-client-linux.tar.gz -C bin/
-  rm openshift-client-linux.tar.gz bin/README.md
+  tar -zxvf openshift-client-linux.tar.gz -C .bin/
+  rm openshift-client-linux.tar.gz .bin/README.md
 
   echo "source <(kubectl completion bash)" >> .envrc
 fi
@@ -157,7 +157,7 @@ if $INSTALL_KIND; then
   echo "----Install kind"
   curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64
   chmod +x ./kind
-  mv ./kind bin/kind
+  mv ./kind .bin/kind
 fi
 
 if [ $KUBECONFIG_PATH ]; then
