@@ -17,14 +17,6 @@ EXISTING=false
 ### Parse arguments
 while [ "$#" -gt 0 ]; do
   case "$1" in
-#    -n) REPO_NAME="$2"; shift 2;;
-#    -g) INSTALL_GO=true; shift 1;;
-#    -h) INSTALL_HELM=true; shift 1;;
-#    -o) INSTALL_OPERATOR_SDK=true; shift 1;;
-#    -c) INSTALL_OC=true; shift 1;;
-#    -i) INSTALL_KIND=true; shift 1;;
-#    -k) KUBECONFIG_PATH="$2"; shift 2;;
-#    -e) EXISTING=true; shift 1;;
 
     --name=*) REPO_NAME="${1#*=}"; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
@@ -119,7 +111,6 @@ if $INSTALL_OPERATOR_SDK; then
   rm checksums.txt*
 fi
 
-# TODO: https://kubernetes.io/docs/reference/kubectl/cheatsheet/#kubectl-autocomplete
 if $INSTALL_OC; then
   echo "----Install oc"
 
