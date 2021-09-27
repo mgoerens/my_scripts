@@ -36,7 +36,7 @@ if [ ! -d $BASE_DIR ]; then
   exit 1
 fi
 
-if [ -z $REPO_NAME ]; then
+if [ -z "$REPO_NAME" ]; then
   echo "Name of the repo to create missing"
   exit 1
 fi
@@ -54,17 +54,17 @@ fi
 echo "----Create basic directory structure and add binary directory in .envrc"
 
 if ! $EXISTING; then
-  mkdir $FULL_REPO_PATH
+  mkdir "$FULL_REPO_PATH"
 fi
 
-cd $FULL_REPO_PATH
+cd "$FULL_REPO_PATH"
 mkdir "$FULL_REPO_PATH/.bin"
 echo "export PATH=\$PATH:$FULL_REPO_PATH/.bin" >> .envrc
 
 GIT_EXCLUDE_PATH="$FULL_REPO_PATH/.git/info/exclude"
-if [ -f $GIT_EXCLUDE_PATH ]; then
-  echo ".bin" >> $GIT_EXCLUDE_PATH
-  echo ".envrc" >> $GIT_EXCLUDE_PATH
+if [ -f "$GIT_EXCLUDE_PATH" ]; then
+  echo ".bin" >> "$GIT_EXCLUDE_PATH"
+  echo ".envrc" >> "$GIT_EXCLUDE_PATH"
 fi
 
 direnv allow
@@ -101,13 +101,13 @@ if $INSTALL_OPERATOR_SDK; then
   export ARCH=$(case $(uname -m) in x86_64) echo -n amd64 ;; aarch64) echo -n arm64 ;; *) echo -n $(uname -m) ;; esac)
   export OS=$(uname | awk '{print tolower($0)}')
   export OPERATOR_SDK_DL_URL=https://github.com/operator-framework/operator-sdk/releases/download/${OPERATOR_SDK_VERSION}
-  curl -LO ${OPERATOR_SDK_DL_URL}/operator-sdk_${OS}_${ARCH}
+  curl -LO "${OPERATOR_SDK_DL_URL}"/operator-sdk_"${OS}"_"${ARCH}"
   gpg --keyserver keyserver.ubuntu.com --recv-keys 052996E2A20B5C7E
-  curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt
-  curl -LO ${OPERATOR_SDK_DL_URL}/checksums.txt.asc
+  curl -LO "${OPERATOR_SDK_DL_URL}"/checksums.txt
+  curl -LO "${OPERATOR_SDK_DL_URL}"/checksums.txt.asc
   gpg -u "Operator SDK (release) <cncf-operator-sdk@cncf.io>" --verify checksums.txt.asc
-  grep operator-sdk_${OS}_${ARCH} checksums.txt | sha256sum -c -
-  chmod +x operator-sdk_${OS}_${ARCH} && mv operator-sdk_${OS}_${ARCH} .bin/operator-sdk
+  grep operator-sdk_"${OS}"_"${ARCH}" checksums.txt | sha256sum -c -
+  chmod +x operator-sdk_"${OS}"_"${ARCH}" && mv operator-sdk_"${OS}"_"${ARCH}" .bin/operator-sdk
   rm checksums.txt*
 fi
 
@@ -121,12 +121,12 @@ if $INSTALL_OC; then
   echo "source <(kubectl completion bash)" >> .envrc
 fi
 
-if [ $KUBECONFIG_PATH ]; then
+if [ "$KUBECONFIG_PATH" ]; then
   cp -v "$KUBECONFIG_PATH" "$FULL_REPO_PATH/KUBECONFIG"
   chmod 600 "$FULL_REPO_PATH/KUBECONFIG"
   echo "export KUBECONFIG=$FULL_REPO_PATH/KUBECONFIG" >> .envrc
   direnv allow
-  if [ -f $GIT_EXCLUDE_PATH ]; then
-    echo "KUBECONFIG" >> $GIT_EXCLUDE_PATH
+  if [ -f "$GIT_EXCLUDE_PATH" ]; then
+    echo "KUBECONFIG" >> "$GIT_EXCLUDE_PATH"
   fi
 fi
