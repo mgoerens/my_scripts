@@ -4,21 +4,25 @@
 #
 # Pre-requisites: direnv
 # - direnv: Not packages for CentOS / RHEL system, see https://github.com/direnv/direnv/issues/362
-
+# - gh: see https://github.com/cli/cli/blob/trunk/docs/install_linux.md
 
 ### Set default values
 BASE_DIR="/home/mgoerens/dev"
+CREATE_REPO=false
 INSTALL_HELM=false
 INSTALL_OPERATOR_SDK=false
 OPERATOR_SDK_VERSION=$(curl -s https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | jq .name | tr -d \")
 INSTALL_OC=false
 EXISTING=false
+REPO_FULL_NAME=""
 
 ### Parse arguments
 while [ "$#" -gt 0 ]; do
   case "$1" in
 
     --dir_name=*) DIR_NAME="${1#*=}"; shift 1;;
+    --create_repo) CREATE_REPO=true; REPO_FULL_NAME="github.com/mgoerens/$DIR_NAME"; shift 1;;
+    --create_repo=*) CREATE_REPO=true; REPO_FULL_NAME="${1#*=}"; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
@@ -26,7 +30,7 @@ while [ "$#" -gt 0 ]; do
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
      
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --dir_name=<repo_name> --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --dir_name=<repo_name> --create_repo=github.com/mgoerens/repo_name --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
@@ -49,14 +53,47 @@ if [[ -d $FULL_REPO_PATH && ! $EXISTING ]]; then
   exit 1
 fi
 
+# Validate repository full name
+if $CREATE_REPO; then
+
+  REPO_MANAGER=$(cut -d / -f 1 <<< $REPO_FULL_NAME)
+  REPO_ORG_NAME=$(cut -d / -f 2 <<< $REPO_FULL_NAME)
+  REPO_NAME=$(cut -d / -f 3 <<< $REPO_FULL_NAME)
+  SHOULD_NOT_UNPACKED=$(cut -d / -f 4 <<< $REPO_FULL_NAME)
+  if [[ -z "$REPO_MANAGER" || -z "$REPO_ORG_NAME" || -z "$REPO_NAME" || ! -z "$SHOULD_NOT_UNPACKED" ]]; then
+    echo "Malformatted repository name. Should be for instance \"gitlab.com/my_org/my_project\""
+    exit 1
+  fi
+
+  if [[ ! "$REPO_MANAGER" == "github.com" && ! "$REPO_MANAGER" == "gitlab.com" ]]; then
+    echo "Unsupported repository manager. Use github.com or gitlab.com."
+    exit 1
+  fi
+
+fi
+
 ### Create dir, init repo, install packages, and configure direnv
 
 echo "----Create basic directory structure and add binary directory in .envrc"
 
 if ! $EXISTING; then
+  echo "Creating $FULL_REPO_PATH"
   mkdir "$FULL_REPO_PATH"
   cd "$FULL_REPO_PATH" || exit
   git init
+
+  if $CREATE_REPO; then
+    echo "Creating repository $REPO_FULL_NAME"
+    case "$REPO_MANAGER" in
+      github.com)
+        # This automatically creates the repo and adds the new remote
+        gh repo create --private -y "$REPO_ORG_NAME"/"$REPO_NAME";;
+      gitlab.com)
+        # This only adds the new remote. The repo will actually be created at the first push
+        git remote add origin git@"$REPO_FULL_NAME".git;;
+    esac
+  fi
+
 else
   cd "$FULL_REPO_PATH" || exit
 fi
