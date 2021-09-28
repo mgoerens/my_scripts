@@ -18,7 +18,7 @@ EXISTING=false
 while [ "$#" -gt 0 ]; do
   case "$1" in
 
-    --name=*) REPO_NAME="${1#*=}"; shift 1;;
+    --dir_name=*) DIR_NAME="${1#*=}"; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
@@ -26,7 +26,7 @@ while [ "$#" -gt 0 ]; do
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
      
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --name=<repo_name> --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --dir_name=<repo_name> --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
@@ -36,20 +36,20 @@ if [ ! -d $BASE_DIR ]; then
   exit 1
 fi
 
-if [ -z "$REPO_NAME" ]; then
-  echo "Name of the repo to create missing"
+if [ -z "$DIR_NAME" ]; then
+  echo "Name of the directory to create missing"
   exit 1
 fi
 
-FULL_REPO_PATH="$BASE_DIR/$REPO_NAME"
+FULL_REPO_PATH="$BASE_DIR/$DIR_NAME"
 
-# Test if repo already exists
+# Test if dir already exists
 if [[ -d $FULL_REPO_PATH && ! $EXISTING ]]; then
-  echo "Directory $REPO_NAME already exists in $BASE_DIR"
+  echo "Directory $DIR_NAME already exists in $BASE_DIR"
   exit 1
 fi
 
-### Create repository, install packages, and configure direnv
+### Create dir, init repo, install packages, and configure direnv
 
 echo "----Create basic directory structure and add binary directory in .envrc"
 
