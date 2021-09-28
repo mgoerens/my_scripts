@@ -55,9 +55,12 @@ echo "----Create basic directory structure and add binary directory in .envrc"
 
 if ! $EXISTING; then
   mkdir "$FULL_REPO_PATH"
+  cd "$FULL_REPO_PATH" || exit
+  git init
+else
+  cd "$FULL_REPO_PATH" || exit
 fi
 
-cd "$FULL_REPO_PATH" || exit
 mkdir "$FULL_REPO_PATH/.bin"
 echo "export PATH=\$PATH:$FULL_REPO_PATH/.bin" >> .envrc
 
