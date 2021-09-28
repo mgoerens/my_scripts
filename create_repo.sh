@@ -20,6 +20,18 @@ REPO_FULL_NAME=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
 
+    # TODO: match directory structure and repository names to ensure no hidden duplicates
+    # ./github.com/
+    # ./github.com/mgoerens/
+    # ./github.com/mgoerens/my_first_repo
+    # ./github.com/mgoerens/my_second_repo
+    # ./github.com/opdev/
+    # ./github.com/opdev/another_repo
+    # ./gitlab.com/
+    # ./gitlab.com/mgoerens/
+    # ./gitlab.com/mgoerens/yet_another_repo
+
+    # TODO: Add possitibiity to clone existing repo (stop assuming this is the start of a project)
     --dir_name=*) DIR_NAME="${1#*=}"; shift 1;;
     --create_repo) CREATE_REPO=true; REPO_FULL_NAME="github.com/mgoerens/$DIR_NAME"; shift 1;;
     --create_repo=*) CREATE_REPO=true; REPO_FULL_NAME="${1#*=}"; shift 1;;
@@ -87,6 +99,7 @@ if ! $EXISTING; then
     case "$REPO_MANAGER" in
       github.com)
         # This automatically creates the repo and adds the new remote
+        # TODO: automatic login
         gh repo create --private -y "$REPO_ORG_NAME"/"$REPO_NAME";;
       gitlab.com)
         # This only adds the new remote. The repo will actually be created at the first push
@@ -98,6 +111,7 @@ else
   cd "$FULL_REPO_PATH" || exit
 fi
 
+# TODO: only create .bin if necessary
 mkdir "$FULL_REPO_PATH/.bin"
 echo "export PATH=\$PATH:$FULL_REPO_PATH/.bin" >> .envrc
 
