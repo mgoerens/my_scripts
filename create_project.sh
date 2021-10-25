@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./create_repo.sh <full_repo_name> --create_repo|--clone_repo|--existing --install_helm --install_operator_sdk --install_oc --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
+# Usage: ./create_project.sh <full_repo_name> --create_repo|--clone_repo|--existing --install_helm --install_operator_sdk --install_oc --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
 #
 # Pre-requisites: direnv
 # - direnv: Not packages for CentOS / RHEL system, see https://github.com/direnv/direnv/issues/362
@@ -41,7 +41,7 @@ while [ "$#" -gt 0 ]; do
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
      
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh github.com/mgoerens/repo_name --create_repo|--clone-repo|--existing --install_helm --install_operator_sdk --install_oc --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_project.sh github.com/mgoerens/repo_name --create_repo|--clone-repo|--existing --install_helm --install_operator_sdk --install_oc --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
