@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./create_repo.sh <full_repo_name> --init_repo --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
+# Usage: ./create_repo.sh <full_repo_name> --create_repo|--clone_repo|--existing --install_helm --install_operator_sdk --install_oc --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
 #
 # Pre-requisites: direnv
 # - direnv: Not packages for CentOS / RHEL system, see https://github.com/direnv/direnv/issues/362
@@ -8,7 +8,8 @@
 
 ### Set default values
 BASE_DIR="/home/mgoerens/dev"
-INIT_REPO=false
+CREATE_REPO=false
+CLONE_REPO=false
 INSTALL_HELM=false
 INSTALL_OPERATOR_SDK=false
 OPERATOR_SDK_VERSION=$(curl -s https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | jq .name | tr -d \")
@@ -31,8 +32,8 @@ shift 1
 while [ "$#" -gt 0 ]; do
   case "$1" in
 
-    # TODO: Add possitibiity to clone existing repo (stop assuming this is the start of a project)
-    --init_repo) INIT_REPO=true; shift 1;;
+    --create_repo) CREATE_REPO=true; shift 1;;
+    --clone_repo) CLONE_REPO=true; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
@@ -40,7 +41,7 @@ while [ "$#" -gt 0 ]; do
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
      
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh github.com/mgoerens/repo_name --init_repo --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh github.com/mgoerens/repo_name --create_repo|--clone-repo|--existing --install_helm --install_operator_sdk --install_oc --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
@@ -53,7 +54,7 @@ fi
 FULL_REPO_PATH="$BASE_DIR/$REPO_FULL_NAME"
 
 # Test if dir already exists
-if [[ -d $FULL_REPO_PATH && ! "$EXISTING" = "false" ]]; then
+if [[ -d $FULL_REPO_PATH && "$EXISTING" = "false" ]]; then
   echo "Directory $REPO_FULL_NAME already exists in $BASE_DIR"
   exit 1
 fi
@@ -72,18 +73,44 @@ if [[ ! "$REPO_MANAGER" == "github.com" && ! "$REPO_MANAGER" == "gitlab.com" ]];
   exit 1
 fi
 
+if [[ "$CREATE_REPO" = "true" && "$CLONE_REPO" = "true" ]]; then
+  echo "Cannot both create and clone repo - choose one !"
+  exit 1
+fi
+
+if [ "$EXISTING" = "true" ]; then
+  if [[ "$CREATE_REPO" = "true" || "$CLONE_REPO" = "true" ]]; then
+    echo "Cannot create or clone the repository if the project already exists"
+  fi
+fi
+
 ### Create dir, init repo, install packages, and configure direnv
 
 echo "----Create basic directory structure and add binary directory in .envrc"
 
-if [ "$EXISTING" = "false" ] ; then
-  echo "Creating $FULL_REPO_PATH"
-  mkdir -p "$FULL_REPO_PATH"
-  cd "$FULL_REPO_PATH" || exit
-  git init
+if [ "$EXISTING" = "false" ]; then
 
-  if [ "$INIT_REPO" = "true" ] ; then
+  if [ "$CLONE_REPO" = "true" ] ; then
+    echo "Cloning repository $REPO_FULL_NAME"
+
+    mkdir -p "$REPO_MANAGER"/"$REPO_ORG_NAME"
+    cd "$BASE_DIR"/"$REPO_MANAGER"/"$REPO_ORG_NAME" || exit
+
+    ## example github: git@github.com:opdev/synapse-operator.git
+    ## example gitlab: git@gitlab.com:mgoerens/test_ci.git
+    # This will also created the directory
+    git clone "git@$REPO_MANAGER:$REPO_ORG_NAME/$REPO_NAME.git"
+    cd "$FULL_REPO_PATH" || exit
+  else
+    mkdir -p "$FULL_REPO_PATH"
+    cd "$FULL_REPO_PATH" || exit
+    git init
+  fi
+
+  if [ "$CREATE_REPO" = "true" ] ; then
     echo "Creating repository $REPO_FULL_NAME"
+
+    ## TODO: Add posibility to create repo online in a later step (independant from init)
     case "$REPO_MANAGER" in
       github.com)
         # This automatically creates the repo and adds the new remote
@@ -91,15 +118,16 @@ if [ "$EXISTING" = "false" ] ; then
         gh repo create --private -y "$REPO_ORG_NAME"/"$REPO_NAME";;
       gitlab.com)
         # This only adds the new remote. The repo will actually be created at the first push
+        # TODO: is there a gitlab cli ?
         git remote add origin git@"$REPO_FULL_NAME".git;;
     esac
   fi
-
 else
   cd "$FULL_REPO_PATH" || exit
 fi
 
 # TODO: only create .bin if necessary
+# TODO: what if .bin already exists in cloned repo ?
 mkdir "$FULL_REPO_PATH/.bin"
 echo "export PATH=\$PATH:$FULL_REPO_PATH/.bin" >> .envrc
 
