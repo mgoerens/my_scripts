@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./create_repo.sh --name=<repo_name> --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
+# Usage: ./create_repo.sh <full_repo_name> --init_repo --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
 #
 # Pre-requisites: direnv
 # - direnv: Not packages for CentOS / RHEL system, see https://github.com/direnv/direnv/issues/362
@@ -8,7 +8,7 @@
 
 ### Set default values
 BASE_DIR="/home/mgoerens/dev"
-CREATE_REPO=false
+INIT_REPO=false
 INSTALL_HELM=false
 INSTALL_OPERATOR_SDK=false
 OPERATOR_SDK_VERSION=$(curl -s https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | jq .name | tr -d \")
@@ -17,24 +17,22 @@ EXISTING=false
 REPO_FULL_NAME=""
 
 ### Parse arguments
+
+# Get required repo name (also should matches the local directory structure)
+if [ "$#" -lt 1 ]; then
+  echo "Missing required repository name"
+  ## TODO: print Usage (make a function)
+  exit 1
+fi
+
+REPO_FULL_NAME="$1"
+shift 1
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
 
-    # TODO: match directory structure and repository names to ensure no hidden duplicates
-    # ./github.com/
-    # ./github.com/mgoerens/
-    # ./github.com/mgoerens/my_first_repo
-    # ./github.com/mgoerens/my_second_repo
-    # ./github.com/opdev/
-    # ./github.com/opdev/another_repo
-    # ./gitlab.com/
-    # ./gitlab.com/mgoerens/
-    # ./gitlab.com/mgoerens/yet_another_repo
-
     # TODO: Add possitibiity to clone existing repo (stop assuming this is the start of a project)
-    --dir_name=*) DIR_NAME="${1#*=}"; shift 1;;
-    --create_repo) CREATE_REPO=true; REPO_FULL_NAME="github.com/mgoerens/$DIR_NAME"; shift 1;;
-    --create_repo=*) CREATE_REPO=true; REPO_FULL_NAME="${1#*=}"; shift 1;;
+      --init_repo) INIT_REPO=true; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
@@ -42,7 +40,7 @@ while [ "$#" -gt 0 ]; do
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
      
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh --dir_name=<repo_name> --create_repo=github.com/mgoerens/repo_name --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_repo.sh github.com/mgoerens/repo_name --init_repo --install_helm --install_operator_sdk --install_oc --existing --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
@@ -52,36 +50,26 @@ if [ ! -d $BASE_DIR ]; then
   exit 1
 fi
 
-if [ -z "$DIR_NAME" ]; then
-  echo "Name of the directory to create missing"
-  exit 1
-fi
-
-FULL_REPO_PATH="$BASE_DIR/$DIR_NAME"
+FULL_REPO_PATH="$BASE_DIR/$REPO_FULL_NAME"
 
 # Test if dir already exists
-if [[ -d $FULL_REPO_PATH && ! $EXISTING ]]; then
-  echo "Directory $DIR_NAME already exists in $BASE_DIR"
+if [[ -d $FULL_REPO_PATH && ! "$EXISTING" ]]; then
+  echo "Directory $REPO_FULL_NAME already exists in $BASE_DIR"
   exit 1
 fi
 
-# Validate repository full name
-if $CREATE_REPO; then
+REPO_MANAGER=$(cut -d / -f 1 <<< "$REPO_FULL_NAME")
+REPO_ORG_NAME=$(cut -d / -f 2 <<< "$REPO_FULL_NAME")
+REPO_NAME=$(cut -d / -f 3 <<< "$REPO_FULL_NAME")
+SHOULD_NOT_UNPACKED=$(cut -d / -f 4 <<< "$REPO_FULL_NAME")
+if [[ -z "$REPO_MANAGER" || -z "$REPO_ORG_NAME" || -z "$REPO_NAME" || -n "$SHOULD_NOT_UNPACKED" ]]; then
+  echo "Malformatted repository name. Should be for instance \"gitlab.com/my_org/my_project\""
+  exit 1
+fi
 
-  REPO_MANAGER=$(cut -d / -f 1 <<< $REPO_FULL_NAME)
-  REPO_ORG_NAME=$(cut -d / -f 2 <<< $REPO_FULL_NAME)
-  REPO_NAME=$(cut -d / -f 3 <<< $REPO_FULL_NAME)
-  SHOULD_NOT_UNPACKED=$(cut -d / -f 4 <<< $REPO_FULL_NAME)
-  if [[ -z "$REPO_MANAGER" || -z "$REPO_ORG_NAME" || -z "$REPO_NAME" || ! -z "$SHOULD_NOT_UNPACKED" ]]; then
-    echo "Malformatted repository name. Should be for instance \"gitlab.com/my_org/my_project\""
-    exit 1
-  fi
-
-  if [[ ! "$REPO_MANAGER" == "github.com" && ! "$REPO_MANAGER" == "gitlab.com" ]]; then
-    echo "Unsupported repository manager. Use github.com or gitlab.com."
-    exit 1
-  fi
-
+if [[ ! "$REPO_MANAGER" == "github.com" && ! "$REPO_MANAGER" == "gitlab.com" ]]; then
+  echo "Unsupported repository manager. Use github.com or gitlab.com."
+  exit 1
 fi
 
 ### Create dir, init repo, install packages, and configure direnv
@@ -90,11 +78,11 @@ echo "----Create basic directory structure and add binary directory in .envrc"
 
 if ! $EXISTING; then
   echo "Creating $FULL_REPO_PATH"
-  mkdir "$FULL_REPO_PATH"
+  mkdir -p "$FULL_REPO_PATH"
   cd "$FULL_REPO_PATH" || exit
   git init
 
-  if $CREATE_REPO; then
+  if $INIT_REPO; then
     echo "Creating repository $REPO_FULL_NAME"
     case "$REPO_MANAGER" in
       github.com)
