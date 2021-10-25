@@ -32,7 +32,7 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
 
     # TODO: Add possitibiity to clone existing repo (stop assuming this is the start of a project)
-      --init_repo) INIT_REPO=true; shift 1;;
+    --init_repo) INIT_REPO=true; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
@@ -53,7 +53,7 @@ fi
 FULL_REPO_PATH="$BASE_DIR/$REPO_FULL_NAME"
 
 # Test if dir already exists
-if [[ -d $FULL_REPO_PATH && ! "$EXISTING" ]]; then
+if [[ -d $FULL_REPO_PATH && ! "$EXISTING" = "false" ]]; then
   echo "Directory $REPO_FULL_NAME already exists in $BASE_DIR"
   exit 1
 fi
@@ -76,13 +76,13 @@ fi
 
 echo "----Create basic directory structure and add binary directory in .envrc"
 
-if ! $EXISTING; then
+if [ "$EXISTING" = "false" ] ; then
   echo "Creating $FULL_REPO_PATH"
   mkdir -p "$FULL_REPO_PATH"
   cd "$FULL_REPO_PATH" || exit
   git init
 
-  if $INIT_REPO; then
+  if [ "$INIT_REPO" = "true" ] ; then
     echo "Creating repository $REPO_FULL_NAME"
     case "$REPO_MANAGER" in
       github.com)
@@ -112,7 +112,7 @@ fi
 direnv allow
 
 # TODO: set helm version
-if $INSTALL_HELM; then
+if [ "$INSTALL_HELM" = "true" ]; then
   echo "----Install Helm"
   
   # Download binary
@@ -135,7 +135,7 @@ if $INSTALL_HELM; then
 fi
 
 # Adapted procedure from: https://sdk.operatorframework.io/docs/installation/
-if $INSTALL_OPERATOR_SDK; then
+if [ "$INSTALL_OPERATOR_SDK" = "true" ]; then
   echo "----Install the Operator SDK"
   echo "----Version: $OPERATOR_SDK_VERSION"
 
@@ -153,7 +153,7 @@ if $INSTALL_OPERATOR_SDK; then
   rm checksums.txt*
 fi
 
-if $INSTALL_OC; then
+if [ "$INSTALL_OC" = "true" ]; then
   echo "----Install oc"
 
   wget https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
@@ -161,9 +161,12 @@ if $INSTALL_OC; then
   rm openshift-client-linux.tar.gz .bin/README.md
 
   echo "source <(kubectl completion bash)" >> .envrc
+  direnv allow
 fi
 
-if [ "$KUBECONFIG_PATH" ]; then
+if [ -n "$KUBECONFIG_PATH" ]; then
+  ## TODO: test if path exists to avoid failing on cp
+  ## TODO: store in .kube/config instead
   cp -v "$KUBECONFIG_PATH" "$FULL_REPO_PATH/KUBECONFIG"
   chmod 600 "$FULL_REPO_PATH/KUBECONFIG"
   echo "export KUBECONFIG=$FULL_REPO_PATH/KUBECONFIG" >> .envrc
