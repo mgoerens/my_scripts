@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage: ./create_project.sh <full_repo_name> --create_repo|--clone_repo|--existing --install_helm --install_operator_sdk --install_oc --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
+# Usage: ./create_project.sh <full_repo_name> --create_repo|--clone_repo|--existing --install_helm --install_operator_sdk --install_oc --crc_login_enabled --kubeconfig=~/dev/kubeconfigs/my_kubeconfig
 #
 # Pre-requisites: direnv
 # - direnv: Not packages for CentOS / RHEL system, see https://github.com/direnv/direnv/issues/362
@@ -16,6 +16,7 @@ OPERATOR_SDK_VERSION=$(curl -s https://api.github.com/repos/operator-framework/o
 INSTALL_OC=false
 EXISTING=false
 REPO_FULL_NAME=""
+CRC_LOGIN_ENABLED=false
 
 ### Parse arguments
 
@@ -38,10 +39,11 @@ while [ "$#" -gt 0 ]; do
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
     --install_oc) INSTALL_OC=true; shift 1;;
+    --crc_login_enabled) CRC_LOGIN_ENABLED=true; shift 1;;
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
-     
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_project.sh github.com/mgoerens/repo_name --create_repo|--clone-repo|--existing --install_helm --install_operator_sdk --install_oc --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
+    # TODO: Install opm: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/opm-linux.tar.gz
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_project.sh github.com/mgoerens/repo_name --create_repo|--clone-repo|--existing --install_helm --install_operator_sdk --install_oc --crc_login_enabled --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
@@ -189,6 +191,21 @@ if [ "$INSTALL_OC" = "true" ]; then
   rm openshift-client-linux.tar.gz .bin/README.md
 
   echo "source <(kubectl completion bash)" >> .envrc
+
+  direnv allow
+fi
+
+if [ "$CRC_LOGIN_ENABLED" = "true" ]; then
+  echo "----Add automatic login to CRC"
+
+  # use first: crc config set kubeadmin-password <password_you_prefer>
+  cat << EOF >> .envrc
+if [ \`crc status | awk '{if (\$1 == "OpenShift:") print \$2}'\` == "Running" ]; then
+  export PATH="/home/mgoerens/.crc/bin/oc:\$PATH"
+  oc login -u kubeadmin -p kubeadmin https://api.crc.testing:6443
+fi
+EOF
+
   direnv allow
 fi
 
@@ -203,3 +220,4 @@ if [ -n "$KUBECONFIG_PATH" ]; then
     echo "KUBECONFIG" >> "$GIT_EXCLUDE_PATH"
   fi
 fi
+
