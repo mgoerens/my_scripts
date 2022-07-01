@@ -11,6 +11,7 @@ BASE_DIR="/home/mgoerens/dev"
 CREATE_REPO=false
 CLONE_REPO=false
 INSTALL_HELM=false
+HELM_VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest  | jq .name | tr -d \" | cut -d " " -f 2)
 INSTALL_OPERATOR_SDK=false
 OPERATOR_SDK_VERSION=$(curl -s https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | jq .name | tr -d \")
 INSTALL_OC=false
@@ -36,6 +37,7 @@ while [ "$#" -gt 0 ]; do
     --create_repo) CREATE_REPO=true; shift 1;;
     --clone_repo) CLONE_REPO=true; shift 1;;
     --install_helm) INSTALL_HELM=true; shift 1;;
+    --install_helm=*) INSTALL_HELM=true; HELM_VERSION="${1#*=}"; shift 1;;
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
     --install_oc) INSTALL_OC=true; shift 1;;
@@ -43,7 +45,7 @@ while [ "$#" -gt 0 ]; do
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
     # TODO: Install opm: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/opm-linux.tar.gz
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_project.sh github.com/mgoerens/repo_name --create_repo|--clone-repo|--existing --install_helm --install_operator_sdk --install_oc --crc_login_enabled --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_project.sh github.com/mgoerens/repo_name --create_repo|--clone_repo|--existing --install_helm --install_operator_sdk --install_oc --crc_login_enabled --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
@@ -141,17 +143,16 @@ fi
 
 direnv allow
 
-# TODO: set helm version
 if [ "$INSTALL_HELM" = "true" ]; then
   echo "----Install Helm"
   
   # Download binary
-  wget https://get.helm.sh/helm-v3.6.0-linux-amd64.tar.gz
-  tar -zxvf helm-v3.6.0-linux-amd64.tar.gz 
+  wget https://get.helm.sh/helm-"$HELM_VERSION"-linux-amd64.tar.gz
+  tar -zxvf helm-"$HELM_VERSION"-linux-amd64.tar.gz
   mv linux-amd64/helm .bin/
   rm -rf linux-amd64/
 #  helm version
-  rm helm-v3.6.0-linux-amd64.tar.gz
+  rm helm-"$HELM_VERSION"-linux-amd64.tar.gz
 
   # TODO: NOT TESTED
   # if [ -f $FULL_REPO_PATH/.helmignore ]; then
