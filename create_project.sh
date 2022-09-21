@@ -21,6 +21,8 @@ CRC_LOGIN_ENABLED=false
 
 ### Parse arguments
 
+ALLOWED_REPO_MANAGERS="github.com gitlab.com gitlab.cee.redhat.com"
+
 # Get required repo name (also should matches the local directory structure)
 if [ "$#" -lt 1 ]; then
   echo "Missing required repository name"
@@ -72,8 +74,8 @@ if [[ -z "$REPO_MANAGER" || -z "$REPO_ORG_NAME" || -z "$REPO_NAME" || -n "$SHOUL
   exit 1
 fi
 
-if [[ ! "$REPO_MANAGER" == "github.com" && ! "$REPO_MANAGER" == "gitlab.com" ]]; then
-  echo "Unsupported repository manager. Use github.com or gitlab.com."
+if [[ ! " $ALLOWED_REPO_MANAGERS " =~ .*\ $REPO_MANAGER\ .* ]]; then
+  echo "Unsupported repository manager. Use one of: $ALLOWED_REPO_MANAGERS"
   exit 1
 fi
 
