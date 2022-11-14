@@ -1,0 +1,13 @@
+# .bashrc
+
+sshr()
+{
+    if [ "$#" -ne 1 ]; then
+        echo "Invalid target host"
+        return 1
+    fi
+
+    until ssh "$1";
+        do sleep 5;
+    done
+}
