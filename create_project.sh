@@ -47,7 +47,9 @@ while [ "$#" -gt 0 ]; do
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
     # TODO: Install opm: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/opm-linux.tar.gz
-    *) echo "unknown option: $1" >&2; echo "Usage: ./create_project.sh github.com/mgoerens/repo_name --create_repo|--clone_repo|--existing --install_helm --install_operator_sdk --install_oc --crc_login_enabled --kubeconfig=~/dev/kubeconfigs/my_kubeconfig" && exit 1;;
+    # TODO: Add option to fork repo to mgoerens before clone
+    # TODO: Add option to which kubeconfig to use of if crc
+    *) echo "unknown option: $1" >&2; echo "Usage: ./create_project.sh github.com/mgoerens/repo_name --create_repo|--clone_repo|--existing --install_helm --install_operator_sdk --install_oc --crc_login_enabled --kubeconfig=/home/mgoerens/dev/kubeconfigs/my_kubeconfig" && exit 1;;
   esac
 done
 
@@ -65,6 +67,7 @@ if [[ -d $FULL_REPO_PATH && "$EXISTING" = "false" ]]; then
   exit 1
 fi
 
+# TODO: This doesn't allow to clone: gitlab.com/redhat/centos-stream/src/kernel/centos-stream-9
 REPO_MANAGER=$(cut -d / -f 1 <<< "$REPO_FULL_NAME")
 REPO_ORG_NAME=$(cut -d / -f 2 <<< "$REPO_FULL_NAME")
 REPO_NAME=$(cut -d / -f 3 <<< "$REPO_FULL_NAME")
