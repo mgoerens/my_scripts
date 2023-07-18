@@ -131,14 +131,13 @@ if [ "$EXISTING" = "false" ]; then
         git remote add origin git@"$REPO_FULL_NAME".git;;
     esac
   fi
+
+  # TODO: what if .bin already exists in cloned repo ?
+  mkdir "$FULL_REPO_PATH/.bin"
+  echo "export PATH=\$PATH:$FULL_REPO_PATH/.bin" >> .envrc
 else
   cd "$FULL_REPO_PATH" || exit
 fi
-
-# TODO: only create .bin if necessary
-# TODO: what if .bin already exists in cloned repo ?
-mkdir "$FULL_REPO_PATH/.bin"
-echo "export PATH=\$PATH:$FULL_REPO_PATH/.bin" >> .envrc
 
 GIT_EXCLUDE_PATH="$FULL_REPO_PATH/.git/info/exclude"
 if [ -f "$GIT_EXCLUDE_PATH" ]; then
@@ -203,15 +202,7 @@ fi
 
 if [ "$CRC_LOGIN_ENABLED" = "true" ]; then
   echo "----Add automatic login to CRC"
-
-  # use first: crc config set kubeadmin-password <password_you_prefer>
-  cat << EOF >> .envrc
-if [ \`crc status | awk '{if (\$1 == "OpenShift:") print \$2}'\` == "Running" ]; then
-  export PATH="/home/mgoerens/.crc/bin/oc:\$PATH"
-  oc login -u kubeadmin -p kubeadmin https://api.crc.testing:6443
-fi
-EOF
-
+  echo "export KUBECONFIG=\"$BASE_DIR/kubeconfigs/crc_config\"" >> .envrc
   direnv allow
 fi
 
