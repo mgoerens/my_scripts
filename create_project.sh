@@ -15,6 +15,7 @@ HELM_VERSION=$(curl -s https://api.github.com/repos/helm/helm/releases/latest  |
 INSTALL_OPERATOR_SDK=false
 OPERATOR_SDK_VERSION=$(curl -s https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | jq .name | tr -d \")
 INSTALL_OC=false
+INIT_GO_MODULE=false
 EXISTING=false
 REPO_FULL_NAME=""
 CRC_LOGIN_ENABLED=false
@@ -43,6 +44,7 @@ while [ "$#" -gt 0 ]; do
     --install_operator_sdk) INSTALL_OPERATOR_SDK=true; shift 1;;
     --install_operator_sdk=*) INSTALL_OPERATOR_SDK=true; OPERATOR_SDK_VERSION="${1#*=}"; shift 1;;
     --install_oc) INSTALL_OC=true; shift 1;;
+    --go_mod_init) INIT_GO_MODULE=true; shift 1;;
     --crc_login_enabled) CRC_LOGIN_ENABLED=true; shift 1;;
     --existing) EXISTING=true; shift 1;;
     --kubeconfig=*) KUBECONFIG_PATH="${1#*=}"; shift 1;;
@@ -198,6 +200,12 @@ if [ "$INSTALL_OC" = "true" ]; then
   echo "source <(kubectl completion bash)" >> .envrc
 
   direnv allow
+fi
+
+if [ "$INIT_GO_MODULE" = "true" ]; then
+  echo "----Initialiaze go module"
+
+  go mod init "$REPO_FULL_NAME"
 fi
 
 if [ "$CRC_LOGIN_ENABLED" = "true" ]; then
