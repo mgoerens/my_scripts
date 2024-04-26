@@ -8,7 +8,7 @@ echo "> Default branch: $DEFAULT_BRANCH"
 
 echo "> Stash changes if needed"
 stash=0
-git status --porcelain | grep "^." >/dev/null
+git status --porcelain | grep "^." | grep -v "^?" >/dev/null
 if [ $? -eq 0 ]; then
   git stash
   stash=1

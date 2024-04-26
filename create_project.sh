@@ -126,11 +126,12 @@ if [ "$EXISTING" = "false" ]; then
       github.com)
         # This automatically creates the repo and adds the new remote
         # TODO: automatic login
-        gh repo create --private -y "$REPO_ORG_NAME"/"$REPO_NAME";;
+        gh repo create --private -y "$REPO_ORG_NAME"/"$REPO_NAME"
+        git remote add origin git@github.com:"$REPO_ORG_NAME"/"$REPO_NAME";;
       gitlab.com)
         # This only adds the new remote. The repo will actually be created at the first push
         # TODO: is there a gitlab cli ?
-        git remote add origin git@"$REPO_FULL_NAME".git;;
+        git remote add origin git@gitlab.com:"$REPO_ORG_NAME"/"$REPO_NAME".git;;
     esac
   fi
 
