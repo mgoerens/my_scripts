@@ -137,7 +137,7 @@ if [ "$EXISTING" = "false" ]; then
 
   # TODO: what if .bin already exists in cloned repo ?
   mkdir "$FULL_REPO_PATH/.bin"
-  echo "export PATH=\$PATH:$FULL_REPO_PATH/.bin" >> .envrc
+  echo "export PATH=$FULL_REPO_PATH/.bin:\$PATH" >> .envrc
 else
   cd "$FULL_REPO_PATH" || exit
 fi
